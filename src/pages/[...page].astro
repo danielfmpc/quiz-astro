@@ -1,0 +1,167 @@
+---
+import type { GetStaticPaths } from "astro";
+import Header from "../components/Header.astro";
+import Layout from "../layouts/Layout.astro";
+
+export const getStaticPaths = (({ paginate }) => {
+  const quiz = [
+    {
+      pergunta:
+        "Qual time brasileiro conquistou a Copa Libertadores da América em 1992?",
+      respostas: ["São Paulo FC", "Flamengo", "Grêmio"],
+      correta: 0,
+    },
+    {
+      pergunta:
+        "Quem foi o artilheiro da Copa do Mundo de 1994, onde o Brasil foi campeão?",
+      respostas: ["Romário", "Bebeto", "Ronaldo"],
+      correta: 0,
+    },
+    {
+      pergunta: "Em que ano o Palmeiras conquistou a Copa Rio Internacional?",
+      respostas: ["1997", "1999", "1998"],
+      correta: 2,
+    },
+    {
+      pergunta:
+        "Qual clube brasileiro venceu a Supercopa Libertadores em 1993?",
+      respostas: ["Cruzeiro", "Internacional", "Vasco da Gama"],
+      correta: 0,
+    },
+    {
+      pergunta:
+        "Quem foi o técnico da Seleção Brasileira na Copa do Mundo de 1998?",
+      respostas: ["Vanderlei Luxemburgo", "Carlos Alberto Parreira", "Felipão"],
+      correta: 1,
+    },
+    {
+      pergunta:
+        "Qual jogador brasileiro foi eleito o Melhor do Mundo pela FIFA em 1996?",
+      respostas: ["Ronaldo", "Romário", "Rivaldo"],
+      correta: 2,
+    },
+    {
+      pergunta: "Em 1995, qual clube brasileiro venceu a Taça Conmebol?",
+      respostas: ["Santos FC", "Grêmio", "Fluminense"],
+      correta: 0,
+    },
+    {
+      pergunta: "Qual foi o primeiro time a vencer a Copa do Brasil em 1990?",
+      respostas: ["Corinthians", "Flamengo", "Vasco da Gama"],
+      correta: 1,
+    },
+    {
+      pergunta:
+        "Em 1994, qual jogador brasileiro marcou um gol decisivo nas quartas de final da Copa do Mundo?",
+      respostas: ["Bebeto", "Romário", "Zinho"],
+      correta: 0,
+    },
+    {
+      pergunta: "Qual clube brasileiro foi campeão da Copa CONMEBOL em 1998?",
+      respostas: ["Atlético Mineiro", "Corinthians", "Fluminense"],
+      correta: 0,
+    },
+  ];
+
+  return paginate(quiz, { pageSize: 1 });
+}) satisfies GetStaticPaths;
+
+const { page } = Astro.props;
+
+const [quiz] = page.data;
+---
+
+<Layout>
+  <main>
+    <Header title="Futebol" />
+
+    <div id="quiz">
+      <div class="quiz-item">
+        <h3 data-id={page.currentPage}>{quiz.pergunta}</h3>
+        <dl>
+          {
+            quiz.respostas.map((r: string, ridx: number) => (
+              <dt>
+                <input type="radio" name="item" value={ridx} />
+                <span> {r} </span>
+              </dt>
+            ))
+          }
+        </dl>
+      </div>
+    </div>
+
+    <div class="flex justify-between mt-2">
+      {
+        page.url.prev && (
+          <a
+            class={`
+              py-2 px-3
+              bg-slate-700
+              text-white
+              rounded-md
+              text-xs
+              hover:outline outiline-slate-100
+            `}
+            href={page.url.prev}
+          >
+            Anterior
+          </a>
+        )
+      }
+      {
+        page.url.next && (
+          <a
+            class={`
+              ml-auto
+              py-2 px-3
+              bg-slate-700
+              text-white
+              rounded-md
+              text-xs
+              hover:outline outiline-slate-100
+            `}
+            href={page.url.next}
+          >
+            Próxima
+          </a>
+        )
+      }
+    </div>
+
+    <div id="acertos">
+      <strong>Acertos</strong>
+      <span>0 de 10</span>
+    </div>
+  </main>
+</Layout>
+<script define:vars={{ quiz, page }}>
+  const values = JSON.parse(localStorage.getItem("quiz::values") || "{}");
+
+  const count = () =>
+    Object.keys(values).filter((key) => values[key].isCorrect).length;
+
+  let selected;
+  Object.keys(values).forEach((key) => {
+    const current = values[page.currentPage];
+    selected = current?.selected;
+  });
+
+  const total = document.querySelector("#acertos span");
+  total.textContent = `${count()} de 10`;
+
+  const inputs = document.querySelectorAll("input");
+  for (let input of inputs) {
+    input.checked = selected == input.value;
+
+    input.addEventListener("change", (e) => {
+      values[page.currentPage] = {
+        selected: e.target.value,
+        isCorrect: +e.target.value === +quiz.correta,
+      };
+      localStorage.setItem("quiz::values", JSON.stringify(values));
+
+      total.textContent = `${count()} de 10`;
+    });
+  }
+</script>
